@@ -28,7 +28,12 @@ from neural.models import UserInteraction
 
 class ReelListView(generics.ListCreateAPIView):
     serializer_class = ReelSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        # Allow anyone to view reels, but require auth to create
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
     
     def get_queryset(self):
         queryset = Reel.objects.filter(is_private=False).select_related('creator').prefetch_related('interactions')
@@ -66,7 +71,12 @@ class ReelListView(generics.ListCreateAPIView):
 
 class ReelDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReelSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        # Allow anyone to view, but require auth for modifications
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
     
     def get_queryset(self):
         return Reel.objects.select_related('creator').prefetch_related('interactions')

@@ -70,7 +70,11 @@ class LoginView(generics.GenericAPIView):
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
     
     def get_object(self):
         profile, created = UserProfile.objects.get_or_create(user=self.request.user)
@@ -79,7 +83,11 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
     
     def get_object(self):
         return self.request.user
