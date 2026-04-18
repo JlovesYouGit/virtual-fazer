@@ -120,11 +120,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       case 'chat_message':
         // New message received
         const newMessage = data.message;
-        setMessages(prev => [...prev, newMessage]);
+        setMessages((prev: any) => [...prev, newMessage]);
         
         // Update unread count if not in current room
         if (currentRoom?.id !== newMessage.room) {
-          setUnreadCount(prev => prev + 1);
+          setUnreadCount((prev: number) => prev + 1);
         }
         
         // Invalidate inbox cache
@@ -134,7 +134,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       case 'message_reaction':
         // Message reaction added/removed
         const reactionData = data.reaction;
-        setMessages(prev => prev.map(msg => 
+        setMessages((prev: any[]) => prev.map((msg: { id: any; reactions: any; }) => 
           msg.id === reactionData.message_id
             ? { ...msg, reactions: [...(msg.reactions || []), reactionData] }
             : msg
@@ -144,11 +144,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       case 'typing_indicator':
         // User typing indicator
         const { username, is_typing } = data;
-        setTypingUsers(prev => {
+        setTypingUsers((prev: any[]) => {
           if (is_typing) {
             return prev.includes(username) ? prev : [...prev, username];
           } else {
-            return prev.filter(u => u !== username);
+            return prev.filter((u: any) => u !== username);
           }
         });
         break;
@@ -156,7 +156,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       case 'messages_read':
         // Messages marked as read
         const { user_id, read_up_to } = data;
-        setMessages(prev => prev.map(msg => ({
+        setMessages((prev: any[]) => prev.map((msg: { sender: { id: any; }; is_read: any; read_receipts: any; }) => ({
           ...msg,
           is_read: msg.sender.id === user_id ? true : msg.is_read,
           read_receipts: msg.sender.id === user_id 
@@ -168,7 +168,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       case 'new_direct_message':
         // New direct message notification
         const { room_id, sender_id, sender_username } = data;
-        setUnreadCount(prev => prev + 1);
+        setUnreadCount((prev: number) => prev + 1);
         
         // Invalidate inbox cache
         queryClient.invalidateQueries({ queryKey: ['inbox'] });
@@ -178,7 +178,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       case 'message_updated':
         // Message edited or deleted
         const updatedMessage = data.message;
-        setMessages(prev => prev.map(msg => 
+        setMessages((prev: any[]) => prev.map((msg: { id: any; }) => 
           msg.id === updatedMessage.id ? updatedMessage : msg
         ));
         break;
