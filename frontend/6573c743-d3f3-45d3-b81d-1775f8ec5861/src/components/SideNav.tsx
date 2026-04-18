@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home,
   Compass,
@@ -12,6 +12,7 @@ import {
 'lucide-react';
 import { RedBirdLogo } from './RedBirdLogo';
 export function SideNav() {
+  const navigate = useNavigate();
   const navItems = [
   {
     icon: Home,
@@ -73,7 +74,9 @@ export function SideNav() {
         )}
       </nav>
 
-      <button className="mt-4 flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover text-white py-3 rounded-xl font-semibold transition-colors">
+      <button 
+        onClick={() => navigate('/create')}
+        className="mt-4 flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover text-white py-3 rounded-xl font-semibold transition-colors">
         <PlusSquare size={20} />
         <span>Create Post</span>
       </button>
