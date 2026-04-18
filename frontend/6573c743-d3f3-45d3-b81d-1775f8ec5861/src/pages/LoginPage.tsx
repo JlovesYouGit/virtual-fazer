@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RedBirdLogo } from '../components/RedBirdLogo';
+import { useAuth } from '../context/AuthContext';
+
 export function LoginPage() {
   const navigate = useNavigate();
-  const handleSubmit = (e: React.FormEvent) => {
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/feed');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await login(email, password);
+      navigate('/feed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4 font-sans">
@@ -33,27 +51,38 @@ export function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 rounded-xl px-4 py-3 text-sm">
+                {error}
+              </div>
+            )}
             <div>
               <input
                 type="email"
                 placeholder="Email or username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors"
-                required />
-              
+                required
+                disabled={isLoading}
+              />
             </div>
             <div>
               <input
                 type="password"
                 placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors"
-                required />
-              
+                required
+                disabled={isLoading}
+              />
             </div>
             <button
               type="submit"
-              className="w-full bg-brand hover:bg-brand-hover text-white font-bold py-3 rounded-xl transition-colors mt-2">
-              
-              Log In
+              className="w-full bg-brand hover:bg-brand-hover text-white font-bold py-3 rounded-xl transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Log In'}
             </button>
           </form>
 
@@ -65,7 +94,7 @@ export function LoginPage() {
 
           <button 
             onClick={() => {
-              const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=473715635548-phpqpcvcji0uilu7sg1tcdppv5aoc63u.apps.googleusercontent.com&redirect_uri=${encodeURIComponent('http://localhost:5175/auth/callback/google/')}&response_type=code&scope=profile email&access_type=online`;
+              const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=473715635548-phpqpcvcji0uilu7sg1tcdppv5aoc63u.apps.googleusercontent.com&redirect_uri=${encodeURIComponent('http://localhost:5173/auth/callback/google/')}&response_type=code&scope=profile email&access_type=online`;
               window.location.href = googleOAuthUrl;
             }}
             className="w-full bg-white text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors">
