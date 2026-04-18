@@ -20,6 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithTokens: (accessToken: string, refreshToken: string, user: User) => void;
   logout: () => void;
   refreshTokens: () => Promise<void>;
   bootstrap: () => Promise<void>;
@@ -78,6 +79,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       throw new Error('Google login failed. Please try again.');
     }
+  };
+
+  const loginWithTokens = (accessToken: string, refreshToken: string, user: User) => {
+    setAccessToken(accessToken);
+    setRefreshToken(refreshToken);
+    setUser(user);
+    setStatus('authenticated');
+    
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('user', JSON.stringify(user));
   };
 
   const logout = async () => {
@@ -183,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     login,
     loginWithGoogle,
+    loginWithTokens,
     logout,
     refreshTokens,
     bootstrap,

@@ -8,10 +8,15 @@ urlpatterns = [
     # Django allauth URLs
     path('accounts/', include('allauth.urls')),
     path('api/auth/', include('users.urls')),
-    path('api/neural/', include('neural.urls')),
-    path('api/connections/', include('connections.urls')),
-    path('api/chat/', include('chat.urls')),
-    path('api/reels/', include('reels.urls')),
+    path('api/auth/', include('users.urls_social')),
+    # path('api/neural/', include('neural.urls')),  # Temporarily disabled due to TensorFlow issues
+    # path('api/connections/', include('connections.urls')),  # Temporarily disabled due to neural dependencies
+    path('api/social/', include('social.urls')),
+    # path('api/chat/', include('chat.urls')),  # Temporarily disabled due to neural dependencies
+    # path('api/reels/', include('reels.urls')),  # Temporarily disabled due to neural dependencies
+    # path('api/comments/', include('comments.urls')),  # Temporarily disabled due to neural dependencies
+    path('api/upload/', include('upload.urls')),
+    path('api/stories/', include('stories.urls')),
 ]
 
 if settings.DEBUG:

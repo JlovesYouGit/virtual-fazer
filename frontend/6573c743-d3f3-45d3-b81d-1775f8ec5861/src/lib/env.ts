@@ -3,7 +3,7 @@ export const env = {
   // API Configuration
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   WS_URL: import.meta.env.VITE_WS_URL || 'ws://localhost:3000',
-  APP_URL: import.meta.env.VITE_APP_URL || 'http://localhost:5173',
+  APP_URL: import.meta.env.VITE_APP_URL || 'http://localhost:5175',
   
   // Google OAuth
   GOOGLE_CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',

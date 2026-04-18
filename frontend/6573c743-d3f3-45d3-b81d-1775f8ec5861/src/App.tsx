@@ -23,6 +23,7 @@ import { RealChatPage } from './components/RealChatPage';
 import { RealNeuralPage } from './components/RealNeuralPage';
 import { CreatePostPage } from './components/CreatePostPage';
 import { ApiIntegrationTest } from './components/ApiIntegrationTest';
+import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -50,6 +51,7 @@ export function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/auth/callback/google" element={<OAuthCallbackPage />} />
 
                 {/* Authenticated Routes with protection */}
                 <Route
@@ -89,7 +91,9 @@ export function App() {
                   path="/chat"
                   element={
                     <ProtectedRoute>
-                      <RealChatPage />
+                      <AppLayout>
+                        <ChatPage />
+                      </AppLayout>
                     </ProtectedRoute>
                   }
                 />

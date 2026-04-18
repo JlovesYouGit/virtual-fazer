@@ -1,17 +1,24 @@
 import os
 from pathlib import Path
+from django.conf import settings
+from dotenv import load_dotenv
 import environ
+
+load_dotenv()
+
+try:
+    env = environ.Env(
+        DEBUG=(bool, False)
+    )
+except ImportError:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("Please install 'django-environ' package: pip install django-environ")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Initialize environment variables
-env = environ.Env(
-    DEBUG=(bool, False)
-)
-
 # Take environment variables from .env file
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -48,10 +55,14 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     # Local apps
     'users',
-    'neural',
-    'connections',
-    'chat',
-    'reels',
+    # 'neural',  # Temporarily disabled due to TensorFlow/NumPy compatibility issues
+    # 'connections',  # Temporarily disabled due to neural dependencies
+    'social',
+    # 'chat',  # Temporarily disabled due to neural dependencies
+    # 'reels',  # Temporarily disabled due to neural dependencies
+    # 'comments',  # Temporarily disabled due to neural dependencies
+    'upload',
+    'stories',
 ]
 
 MIDDLEWARE = [
@@ -88,17 +99,27 @@ WSGI_APPLICATION = 'instagran.wsgi.application'
 ASGI_APPLICATION = 'instagran.asgi.application'
 
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', default='instagran'),
-        'USER': env('DB_USER', default='postgres'),
-        'PASSWORD': env('DB_PASSWORD', default='password'),
-        'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='5432'),
+# https://docs.djangoproject.com/en/4.2/ref/settings/# Database Configuration
+if env('DEBUG', default=False):
+    # Use SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # Use PostgreSQL for production
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('DB_NAME', default='instagran'),
+            'USER': env('DB_USER', default='postgres'),
+            'PASSWORD': env('DB_PASSWORD', default='password'),
+            'HOST': env('DB_HOST', default='localhost'),
+            'PORT': env('DB_PORT', default='5432'),
+        }
+    }
 
 # Redis Configuration
 REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
@@ -212,6 +233,11 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
 ACCOUNT_PASSWORD_MIN_LENGTH = 8
+
+# Google OAuth Configuration
+GOOGLE_OAUTH_CLIENT_ID = env('GOOGLE_OAUTH_CLIENT_ID', default='')
+GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET', default='')
+GOOGLE_OAUTH_REDIRECT_URI = env('GOOGLE_OAUTH_REDIRECT_URI', default='http://localhost:5174/auth/callback/google/')
 
 # Social Account Configuration
 SOCIALACCOUNT_PROVIDERS = {
