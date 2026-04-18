@@ -22,6 +22,7 @@ import { RealFeedPage } from './components/RealFeedPage';
 import { RealChatPage } from './components/RealChatPage';
 import { RealNeuralPage } from './components/RealNeuralPage';
 import { CreatePostPage } from './components/CreatePostPage';
+import { ApiIntegrationTest } from './components/ApiIntegrationTest';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -153,6 +154,15 @@ export function App() {
                       <AppLayout>
                         <ProfilePage />
                       </AppLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                
+                <Route
+                  path="/test-api"
+                  element={
+                    <ProtectedRoute>
+                      <ApiIntegrationTest />
                     </ProtectedRoute>
                   }
                 />

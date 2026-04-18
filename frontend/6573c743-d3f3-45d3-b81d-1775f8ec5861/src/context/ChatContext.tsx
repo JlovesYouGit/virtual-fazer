@@ -218,7 +218,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addMessage = (message: Message) => {
-    setMessages(prev => [...prev, message]);
+    setMessages((prev: Message[]) => [...prev, message]);
   };
 
   // Auto-connect on mount

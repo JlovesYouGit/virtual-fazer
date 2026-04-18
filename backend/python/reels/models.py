@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 import uuid
 import json
 
@@ -206,3 +207,35 @@ class ReelChallengeEntry(models.Model):
     
     def __str__(self):
         return f"{self.user.username}'s entry for {self.challenge.name}"
+
+
+class ReelForward(models.Model):
+    """Track forwarded reels and save status"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reel = models.ForeignKey(Reel, on_delete=models.CASCADE, related_name='forwards')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_reel_forwards')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_reel_forwards')
+    message = models.TextField(max_length=500, blank=True, help_text="Optional message from sender")
+    is_saved = models.BooleanField(default=False, help_text="Whether recipient has saved the reel")
+    created_at = models.DateTimeField(auto_now_add=True)
+    saved_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['reel', 'sender', 'recipient']
+        indexes = [
+            models.Index(fields=['recipient', '-created_at']),
+            models.Index(fields=['sender', '-created_at']),
+            models.Index(fields=['reel', '-created_at']),
+            models.Index(fields=['is_saved', '-created_at']),
+        ]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.sender.username} forwarded {self.reel.id} to {self.recipient.username}"
+    
+    def mark_as_saved(self):
+        """Mark the forwarded reel as saved"""
+        if not self.is_saved:
+            self.is_saved = True
+            self.saved_at = timezone.now()
+            self.save()

@@ -12,7 +12,8 @@ import random
 
 from .models import (
     Reel, ReelInteraction, ReelComment, ReelHashtag, ReelMusic,
-    ReelAnalytics, ReelRecommendation, ReelChallenge, ReelChallengeEntry
+    ReelAnalytics, ReelRecommendation, ReelChallenge, ReelChallengeEntry,
+    ReelForward
 )
 from .serializers import (
     ReelSerializer, ReelInteractionSerializer, ReelCommentSerializer,
@@ -520,3 +521,305 @@ def enter_challenge(request, challenge_id):
     
     serializer = ReelChallengeEntrySerializer(entry)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def forward_reel(request):
+    """Forward a reel to one or more users"""
+    reel_id = request.data.get('reel_id')
+    recipient_ids = request.data.get('recipient_ids', [])
+    message = request.data.get('message', '')
+    
+    if not reel_id:
+        return Response({'error': 'Reel ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not recipient_ids:
+        return Response({'error': 'At least one recipient is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        reel = Reel.objects.get(id=reel_id)
+    except Reel.DoesNotExist:
+        return Response({'error': 'Reel not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Check if user can forward this reel
+    if reel.is_private and reel.creator != request.user:
+        return Response({'error': 'Cannot forward private reel'}, status=status.HTTP_403_FORBIDDEN)
+    
+    # Get recipients
+    recipients = User.objects.filter(id__in=recipient_ids, is_active=True)
+    
+    if len(recipients) != len(recipient_ids):
+        return Response({'error': 'One or more recipients not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Create forwards
+    forwards = []
+    for recipient in recipients:
+        # Check if already forwarded
+        if ReelForward.objects.filter(reel=reel, sender=request.user, recipient=recipient).exists():
+            continue
+        
+        forward = ReelForward.objects.create(
+            reel=reel,
+            sender=request.user,
+            recipient=recipient,
+            message=message
+        )
+        forwards.append(forward)
+        
+        # Update reel share count
+        Reel.objects.filter(id=reel_id).update(share_count=F('share_count') + 1)
+        
+        # Create notification for recipient
+        from social.models import Notification
+        Notification.objects.create(
+            recipient=recipient,
+            sender=request.user,
+            notification_type='reel_forward',
+            content_type='reel',
+            content_id=str(reel.id),
+            message=f"{request.user.username} sent you a reel: {reel.caption[:50]}..."
+        )
+        
+        # Send WebSocket notification
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'user_{recipient.id}',
+            {
+                'type': 'reel_forwarded',
+                'reel_id': str(reel.id),
+                'sender_id': str(request.user.id),
+                'sender_username': request.user.username,
+                'message': message,
+                'timestamp': timezone.now().isoformat()
+            }
+        )
+    
+    # Log activity
+    UserActivity.objects.create(
+        user=request.user,
+        activity_type='forward_reel',
+        metadata={
+            'reel_id': str(reel.id),
+            'recipient_count': len(forwards),
+            'message': message[:100]
+        }
+    )
+    
+    return Response({
+        'status': 'success',
+        'forwarded_count': len(forwards),
+        'message': f'Reel forwarded to {len(forwards)} users'
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_forwardable_users(request):
+    """Get list of users that can receive forwarded reels"""
+    user = request.user
+    reel_id = request.query_params.get('reel_id')
+    
+    # Get users that current user follows, users that follow current user, and users in inbox
+    following = User.objects.filter(followers__follower=user, is_active=True)
+    followers = User.objects.filter(following__following=user, is_active=True)
+    
+    # Get users from chat rooms (inbox users)
+    from chat.models import ChatRoom, ChatParticipant
+    chat_users = User.objects.filter(
+        chatparticipant__room__participants__user=user,
+        is_active=True
+    ).distinct()
+    
+    # Combine all users and remove duplicates
+    all_users = (following | followers | chat_users).distinct()
+    
+    # Remove current user
+    all_users = all_users.exclude(id=user.id)
+    
+    # If reel_id is provided, check if user can forward this reel
+    if reel_id:
+        try:
+            reel = Reel.objects.get(id=reel_id)
+            if reel.is_private and reel.creator != user:
+                # For private reels, only allow forwarding to creator
+                all_users = all_users.filter(id=reel.creator.id)
+        except Reel.DoesNotExist:
+            return Response({'error': 'Reel not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Serialize users
+    from users.serializers import UserSerializer
+    serializer = UserSerializer(all_users, many=True)
+    
+    return Response({
+        'users': serializer.data,
+        'total_count': all_users.count()
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_received_forwards(request):
+    """Get reels that have been forwarded to the current user"""
+    user = request.user
+    
+    forwards = ReelForward.objects.filter(
+        recipient=user
+    ).select_related(
+        'reel', 'sender', 'reel__creator'
+    ).order_by('-created_at')
+    
+    # Serialize forwards
+    forward_data = []
+    for forward in forwards:
+        forward_data.append({
+            'id': str(forward.id),
+            'reel': {
+                'id': str(forward.reel.id),
+                'creator': {
+                    'id': str(forward.reel.creator.id),
+                    'username': forward.reel.creator.username,
+                    'first_name': forward.reel.creator.first_name,
+                    'last_name': forward.reel.creator.last_name
+                },
+                'caption': forward.reel.caption,
+                'video_file': forward.reel.video_file.url if forward.reel.video_file else None,
+                'thumbnail': forward.reel.thumbnail.url if forward.reel.thumbnail else None,
+                'duration': forward.reel.duration,
+                'view_count': forward.reel.view_count,
+                'like_count': forward.reel.like_count,
+                'comment_count': forward.reel.comment_count,
+                'created_at': forward.reel.created_at
+            },
+            'sender': {
+                'id': str(forward.sender.id),
+                'username': forward.sender.username,
+                'first_name': forward.sender.first_name,
+                'last_name': forward.sender.last_name
+            },
+            'message': forward.message,
+            'is_saved': forward.is_saved,
+            'created_at': forward.created_at,
+            'saved_at': forward.saved_at
+        })
+    
+    return Response({
+        'forwards': forward_data,
+        'total_count': forwards.count()
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def save_forwarded_reel(request, forward_id):
+    """Mark a forwarded reel as saved"""
+    user = request.user
+    
+    try:
+        forward = ReelForward.objects.get(id=forward_id, recipient=user)
+    except ReelForward.DoesNotExist:
+        return Response({'error': 'Forward not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    forward.mark_as_saved()
+    
+    # Log activity
+    UserActivity.objects.create(
+        user=user,
+        activity_type='save_forwarded_reel',
+        metadata={
+            'forward_id': str(forward.id),
+            'reel_id': str(forward.reel.id)
+        }
+    )
+    
+    return Response({
+        'status': 'success',
+        'message': 'Reel saved successfully',
+        'is_saved': True,
+        'saved_at': forward.saved_at
+    })
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unsave_forwarded_reel(request, forward_id):
+    """Unsave a forwarded reel"""
+    user = request.user
+    
+    try:
+        forward = ReelForward.objects.get(id=forward_id, recipient=user)
+    except ReelForward.DoesNotExist:
+        return Response({'error': 'Forward not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    forward.is_saved = False
+    forward.saved_at = None
+    forward.save()
+    
+    # Log activity
+    UserActivity.objects.create(
+        user=user,
+        activity_type='unsave_forwarded_reel',
+        metadata={
+            'forward_id': str(forward.id),
+            'reel_id': str(forward.reel.id)
+        }
+    )
+    
+    return Response({
+        'status': 'success',
+        'message': 'Reel unsaved successfully',
+        'is_saved': False
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_saved_forwards(request):
+    """Get saved forwarded reels"""
+    user = request.user
+    
+    forwards = ReelForward.objects.filter(
+        recipient=user,
+        is_saved=True
+    ).select_related(
+        'reel', 'sender', 'reel__creator'
+    ).order_by('-saved_at')
+    
+    # Serialize forwards
+    forward_data = []
+    for forward in forwards:
+        forward_data.append({
+            'id': str(forward.id),
+            'reel': {
+                'id': str(forward.reel.id),
+                'creator': {
+                    'id': str(forward.reel.creator.id),
+                    'username': forward.reel.creator.username,
+                    'first_name': forward.reel.creator.first_name,
+                    'last_name': forward.reel.creator.last_name
+                },
+                'caption': forward.reel.caption,
+                'video_file': forward.reel.video_file.url if forward.reel.video_file else None,
+                'thumbnail': forward.reel.thumbnail.url if forward.reel.thumbnail else None,
+                'duration': forward.reel.duration,
+                'view_count': forward.reel.view_count,
+                'like_count': forward.reel.like_count,
+                'comment_count': forward.reel.comment_count,
+                'created_at': forward.reel.created_at
+            },
+            'sender': {
+                'id': str(forward.sender.id),
+                'username': forward.sender.username,
+                'first_name': forward.sender.first_name,
+                'last_name': forward.sender.last_name
+            },
+            'message': forward.message,
+            'saved_at': forward.saved_at
+        })
+    
+    return Response({
+        'forwards': forward_data,
+        'total_count': forwards.count()
+    })

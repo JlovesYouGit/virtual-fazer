@@ -14,4 +14,11 @@ urlpatterns = [
     path('hashtags/trending/', views.get_trending_hashtags, name='trending-hashtags'),
     path('challenges/', views.get_challenges, name='reel-challenges'),
     path('challenges/<uuid:challenge_id>/enter/', views.enter_challenge, name='enter-challenge'),
+    # Reel forwarding endpoints
+    path('forward/', views.forward_reel, name='forward-reel'),
+    path('forward/users/', views.get_forwardable_users, name='forwardable-users'),
+    path('forwards/received/', views.get_received_forwards, name='received-forwards'),
+    path('forwards/saved/', views.get_saved_forwards, name='saved-forwards'),
+    path('forwards/<uuid:forward_id>/save/', views.save_forwarded_reel, name='save-forwarded-reel'),
+    path('forwards/<uuid:forward_id>/unsave/', views.unsave_forwarded_reel, name='unsave-forwarded-reel'),
 ]
