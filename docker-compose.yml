@@ -1,0 +1,229 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: instagran_postgres
+    environment:
+      POSTGRES_DB: instagran
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - instagran_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: instagran_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - instagran_network
+
+  # Python Django Main Service
+  python_backend:
+    build:
+      context: ./backend/python
+      dockerfile: Dockerfile
+    container_name: instagran_python
+    environment:
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=instagran
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=django-insecure-change-me-in-production
+    volumes:
+      - ./backend/python:/app
+      - python_media:/app/media
+      - python_static:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instagran_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # Go High-Performance Service
+  go_backend:
+    build:
+      context: ./backend/go
+      dockerfile: Dockerfile
+    container_name: instagran_go
+    environment:
+      - DATABASE_URL=host=postgres user=postgres dbname=instagran password=password port=5432 sslmode=disable
+      - REDIS_URL=redis:redis:6379
+    volumes:
+      - ./backend/go:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instagran_network
+    command: ./main
+
+  # Ruby Background Jobs Service
+  ruby_backend:
+    build:
+      context: ./backend/ruby
+      dockerfile: Dockerfile
+    container_name: instagran_ruby
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=instagran
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend/ruby:/app
+    ports:
+      - "4567:4567"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instagran_network
+    command: bundle exec ruby app.rb
+
+  # Node.js WebSocket Service
+  nodejs_backend:
+    build:
+      context: ./backend/nodejs
+      dockerfile: Dockerfile
+    container_name: instagran_nodejs
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=instagran
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-secret-key
+      - PORT=3000
+    volumes:
+      - ./backend/nodejs:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instagran_network
+    command: npm start
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: instagran_nginx
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - python_static:/var/www/python_static
+      - python_media:/var/www/python_media
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - python_backend
+      - go_backend
+      - ruby_backend
+      - nodejs_backend
+    networks:
+      - instagran_network
+
+  # Celery Worker (Python Background Tasks)
+  celery_worker:
+    build:
+      context: ./backend/python
+      dockerfile: Dockerfile
+    container_name: instagran_celery_worker
+    environment:
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=instagran
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend/python:/app
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instagran_network
+    command: celery -A instagran worker --loglevel=info
+
+  # Celery Beat (Scheduled Tasks)
+  celery_beat:
+    build:
+      context: ./backend/python
+      dockerfile: Dockerfile
+    container_name: instagran_celery_beat
+    environment:
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=instagran
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend/python:/app
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instagran_network
+    command: celery -A instagran beat --loglevel=info
+
+  # Sidekiq Worker (Ruby Background Jobs)
+  sidekiq:
+    build:
+      context: ./backend/ruby
+      dockerfile: Dockerfile
+    container_name: instagran_sidekiq
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=instagran
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend/ruby:/app
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instagran_network
+    command: bundle exec sidekiq -r ./app.rb
+
+volumes:
+  postgres_data:
+  redis_data:
+  python_media:
+  python_static:
+
+networks:
+  instagran_network:
+    driver: bridge
