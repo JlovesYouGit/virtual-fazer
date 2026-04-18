@@ -14,38 +14,84 @@ async function captureScreenshots() {
     fs.mkdirSync(screenshotsDir);
   }
 
-  const routes = [
-    { url: 'http://localhost:5178/login', name: 'login-page' },
-    { url: 'http://localhost:5178/feed', name: 'feed-page' },
-    { url: 'http://localhost:5178/reels', name: 'reels-page' },
-    { url: 'http://localhost:5178/notifications', name: 'notifications-page' },
-    { url: 'http://localhost:5178/profile', name: 'profile-page' }
-  ];
+  try {
+    // Step 1: Go to login page
+    console.log('Navigating to login page...');
+    await page.goto('http://localhost:5178/login', { waitUntil: 'networkidle', timeout: 10000 });
+    await page.waitForTimeout(1000);
+    
+    // Capture login page
+    await page.screenshot({
+      path: path.join(screenshotsDir, 'login-page.jpg'),
+      type: 'jpeg',
+      quality: 90,
+      fullPage: false
+    });
+    console.log('✓ Saved: screenshots/login-page.jpg');
 
-  for (const route of routes) {
-    try {
-      console.log(`Capturing: ${route.name}...`);
-      await page.goto(route.url, { waitUntil: 'networkidle', timeout: 10000 });
-      
-      // Wait a bit for animations
+    // Step 2: Click "Continue as Guest" button to enter app
+    console.log('Clicking "Continue as Guest"...');
+    const guestButton = await page.locator('button:has-text("Continue as Guest")').first();
+    if (await guestButton.isVisible().catch(() => false)) {
+      await guestButton.click();
       await page.waitForTimeout(2000);
-      
-      // Capture screenshot
-      await page.screenshot({
-        path: path.join(screenshotsDir, `${route.name}.jpg`),
-        type: 'jpeg',
-        quality: 90,
-        fullPage: true
-      });
-      
-      console.log(`✓ Saved: screenshots/${route.name}.jpg`);
-    } catch (error) {
-      console.error(`✗ Failed: ${route.name} - ${error.message}`);
     }
-  }
 
-  await browser.close();
-  console.log('\nAll screenshots captured!');
+    // Step 3: Capture Feed page (should be redirected here after guest login)
+    console.log('Capturing: feed-page...');
+    await page.goto('http://localhost:5178/feed', { waitUntil: 'networkidle', timeout: 10000 });
+    await page.waitForTimeout(2000);
+    await page.screenshot({
+      path: path.join(screenshotsDir, 'feed-page.jpg'),
+      type: 'jpeg',
+      quality: 90,
+      fullPage: false
+    });
+    console.log('✓ Saved: screenshots/feed-page.jpg');
+
+    // Step 4: Capture Reels page
+    console.log('Capturing: reels-page...');
+    await page.goto('http://localhost:5178/reels', { waitUntil: 'networkidle', timeout: 10000 });
+    await page.waitForTimeout(2000);
+    await page.screenshot({
+      path: path.join(screenshotsDir, 'reels-page.jpg'),
+      type: 'jpeg',
+      quality: 90,
+      fullPage: false
+    });
+    console.log('✓ Saved: screenshots/reels-page.jpg');
+
+    // Step 5: Capture Notifications page
+    console.log('Capturing: notifications-page...');
+    await page.goto('http://localhost:5178/notifications', { waitUntil: 'networkidle', timeout: 10000 });
+    await page.waitForTimeout(2000);
+    await page.screenshot({
+      path: path.join(screenshotsDir, 'notifications-page.jpg'),
+      type: 'jpeg',
+      quality: 90,
+      fullPage: false
+    });
+    console.log('✓ Saved: screenshots/notifications-page.jpg');
+
+    // Step 6: Capture Profile page
+    console.log('Capturing: profile-page...');
+    await page.goto('http://localhost:5178/profile', { waitUntil: 'networkidle', timeout: 10000 });
+    await page.waitForTimeout(2000);
+    await page.screenshot({
+      path: path.join(screenshotsDir, 'profile-page.jpg'),
+      type: 'jpeg',
+      quality: 90,
+      fullPage: false
+    });
+    console.log('✓ Saved: screenshots/profile-page.jpg');
+
+    console.log('\n✅ All screenshots captured successfully!');
+    
+  } catch (error) {
+    console.error('\n❌ Error capturing screenshots:', error.message);
+  } finally {
+    await browser.close();
+  }
 }
 
 captureScreenshots().catch(console.error);
