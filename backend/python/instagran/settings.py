@@ -55,12 +55,12 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     # Local apps
     'users',
-    # 'neural',  # Temporarily disabled due to TensorFlow/NumPy compatibility issues
-    # 'connections',  # Temporarily disabled due to neural dependencies
+    'neural',  # Re-enabled - will need TensorFlow fix
+    'connections',
     'social',
-    # 'chat',  # Temporarily disabled due to neural dependencies
-    # 'reels',  # Temporarily disabled due to neural dependencies
-    # 'comments',  # Temporarily disabled due to neural dependencies
+    'chat',
+    'reels',
+    'comments',
     'upload',
     'stories',
 ]
@@ -100,26 +100,17 @@ ASGI_APPLICATION = 'instagran.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/# Database Configuration
-if env('DEBUG', default=False):
-    # Use SQLite for local development
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+# Use PostgreSQL consistently for both development and production
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME', default='instagran'),
+        'USER': env('DB_USER', default='postgres'),
+        'PASSWORD': env('DB_PASSWORD', default='password'),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
     }
-else:
-    # Use PostgreSQL for production
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env('DB_NAME', default='instagran'),
-            'USER': env('DB_USER', default='postgres'),
-            'PASSWORD': env('DB_PASSWORD', default='password'),
-            'HOST': env('DB_HOST', default='localhost'),
-            'PORT': env('DB_PORT', default='5432'),
-        }
-    }
+}
 
 # Redis Configuration
 REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
@@ -193,6 +184,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5175',
+    'http://localhost:8000',  # Django admin
+])
+CORS_ALLOW_CREDENTIALS = True
+
 # REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -209,20 +214,14 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS Configuration
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-])
-
-CORS_ALLOW_CREDENTIALS = True
-
 # JWT Configuration
 from datetime import timedelta
+JWT_SECRET_KEY = env('SECRET_KEY', default='django-insecure-change-me-in-production')
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
+    'SIGNING_KEY': JWT_SECRET_KEY,
 }
 
 # Django Allauth Configuration
