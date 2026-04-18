@@ -2,6 +2,23 @@
 
 A comprehensive social media platform with intelligent user categorization and auto-following capabilities using a neural interface backend.
 
+## 📸 App Screenshots
+
+### Login Page
+![Login Page](screenshots/login-page.jpg)
+
+### Feed Page
+![Feed Page](screenshots/feed-page.jpg)
+
+### Reels Page
+![Reels Page](screenshots/reels-page.jpg)
+
+### Notifications Page
+![Notifications Page](screenshots/notifications-page.jpg)
+
+### Profile Page
+![Profile Page](screenshots/profile-page.jpg)
+
 ## Architecture Overview
 
 This project implements a multi-language microservices architecture inspired by Instagram's backend evolution:
