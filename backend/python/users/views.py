@@ -129,4 +129,98 @@ def track_activity(request):
         metadata=metadata
     )
     
-    return Response(UserActivitySerializer(activity).data, status=status.HTTP_201_CREATED)
+    return Response({'message': 'Activity tracked successfully'}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def google_oauth_callback(request):
+    """
+    Handle Google OAuth callback - receives authorization code from Google
+    """
+    try:
+        # Check for error parameters in callback
+        error = request.GET.get('error')
+        error_description = request.GET.get('error_description')
+        
+        if error:
+            return Response({
+                "error": error,
+                "error_description": error_description,
+                "message": f"Google OAuth failed: {error}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get authorization code from Google
+        code = request.GET.get('code')
+        state = request.GET.get('state')
+        
+        if not code:
+            return Response({"error": "Authorization code not found"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Exchange code for access token
+        import requests
+        token_url = "https://oauth2.googleapis.com/token"
+        data = {
+            'code': code,
+            'client_id': '473715635548-phpqpcvcji0uilu7sg1tcdppv5aoc63u.apps.googleusercontent.com',
+            'client_secret': '473715635548-phpqpcvcji0uilu7sg1tcdppv5aoc63u',
+            'redirect_uri': 'http://localhost:5174/auth/callback/google/',
+            'grant_type': 'authorization_code',
+        }
+        
+        # POST to Google's token endpoint
+        response = requests.post(token_url, data=data)
+        response.raise_for_status()
+        
+        if response.status_code != 200:
+            return Response({"error": "Token exchange failed"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        token_data = response.json()
+        access_token = token_data.get('access_token')
+        id_token = token_data.get('id_token')
+        
+        # Verify ID token to get user info
+        from google.auth.transport.requests import Request
+        from google.oauth2 import id_token
+        
+        request_session = Request()
+        idinfo = id_token.verify_oauth2_token(
+            id_token,
+            request_session,
+            '473715635548-phpqpcvcji0uilu7sg1tcdppv5aoc63u.apps.googleusercontent.com'
+        )
+        
+        # Create or get user
+        user, created = User.objects.get_or_create(
+            email=idinfo['email'],
+            defaults={
+                'username': idinfo['email'].split('@')[0],
+                'first_name': idinfo.get('given_name', ''),
+                'last_name': idinfo.get('family_name', ''),
+                'is_verified': True
+            }
+        )
+        
+        # Create social account link
+        from socialaccount.models import SocialAccount
+        SocialAccount.objects.get_or_create(
+            user=user,
+            provider='google',
+            uid=idinfo['sub'],
+            defaults={
+                'extra_data': idinfo
+            }
+        )
+        
+        # Generate JWT tokens
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(user)
+        
+        # Redirect to frontend with tokens and success flag
+        redirect_url = f"http://localhost:5174/auth/callback?access_token={refresh.access_token}&refresh_token={refresh.token}&user_id={user.id}&success=true"
+        return redirect(redirect_url)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e),
+            "message": f"OAuth token exchange failed: {str(e)}"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

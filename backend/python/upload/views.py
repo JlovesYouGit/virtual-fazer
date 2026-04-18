@@ -22,7 +22,6 @@ from .utils import (
     generate_presigned_url,
     validate_file_type,
     get_file_metadata,
-    process_uploaded_file,
     scan_file_for_malware
 )
 from .permissions import CanUploadContent

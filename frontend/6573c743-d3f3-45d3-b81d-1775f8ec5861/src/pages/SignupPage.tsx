@@ -32,7 +32,12 @@ export function SignupPage() {
             </p>
           </div>
 
-          <button className="w-full bg-white text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors mb-6">
+          <button 
+            onClick={() => {
+              const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=473715635548-phpqpcvcji0uilu7sg1tcdppv5aoc63u.apps.googleusercontent.com&redirect_uri=${encodeURIComponent('http://localhost:5174/auth/callback/google/')}&response_type=code&scope=profile email&access_type=online`;
+              window.location.href = googleOAuthUrl;
+            }}
+            className="w-full bg-white text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors mb-6">
             <svg
               width="20"
               height="20"

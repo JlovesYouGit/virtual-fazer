@@ -13,7 +13,7 @@ class User(AbstractUser):
     date_of_birth = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     website = models.URLField(blank=True)
-    gender = models.CharField(max_length=10, choices=[
+    gender = models.CharField(max_length=20, choices=[
         ('male', 'Male'),
         ('female', 'Female'),
         ('other', 'Other'),
@@ -22,6 +22,22 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_active = models.DateTimeField(default=timezone.now)
+    
+    # Fix reverse accessor conflicts
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='custom_user_groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups'
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='custom_user_permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions'
+    )
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

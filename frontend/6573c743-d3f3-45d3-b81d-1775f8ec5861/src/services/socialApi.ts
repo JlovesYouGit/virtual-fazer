@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '../lib/apiClient';
 
 export interface UserProfile {
   user: {
@@ -156,16 +156,12 @@ export const socialApi = {
   },
 
   // Follow/Unfollow
-  followUser: async (userId: string, message?: string): Promise<{
-    message: string;
-    followers_count?: number;
-    request_id?: string;
-  }> => {
+  followUser: async (userId: string, message?: string): Promise<any> => {
     const response = await apiClient.post(`/social/follow/${userId}/`, { message });
     return response.data;
   },
 
-  unfollowUser: async (userId: string): Promise<{ message: string }> => {
+  unfollowUser: async (userId: string): Promise<any> => {
     const response = await apiClient.delete(`/social/unfollow/${userId}/`);
     return response.data;
   },
@@ -174,13 +170,7 @@ export const socialApi = {
   getFollowers: async (
     userId: string,
     params?: { page?: number; page_size?: number }
-  ): Promise<PaginatedResponse<{
-    id: string;
-    username: string;
-    first_name: string;
-    last_name: string;
-    followed_at: string;
-  }>> => {
+  ): Promise<any> => {
     const response = await apiClient.get(`/social/profile/${userId}/followers/`, { params });
     return response.data;
   },
@@ -188,35 +178,18 @@ export const socialApi = {
   getFollowing: async (
     userId: string,
     params?: { page?: number; page_size?: number }
-  ): Promise<PaginatedResponse<{
-    id: string;
-    username: string;
-    first_name: string;
-    last_name: string;
-    followed_at: string;
-  }>> => {
+  ): Promise<any> => {
     const response = await apiClient.get(`/social/profile/${userId}/following/`, { params });
     return response.data;
   },
 
   // Like/Unlike content
-  likeContent: async (contentType: 'post' | 'reel', contentId: string): Promise<{
-    message: string;
-    like_count: number;
-    is_liked: boolean;
-  }> => {
-    const response = await apiClient.post('/social/like/', {
-      content_type: contentType,
-      content_id: contentId
-    });
+  likeContent: async (contentType: 'post' | 'reel', contentId: string): Promise<any> => {
+    const response = await apiClient.post(`/social/like/${contentType}/${contentId}/`);
     return response.data;
   },
 
-  unlikeContent: async (contentType: 'post' | 'reel', contentId: string): Promise<{
-    message: string;
-    like_count: number;
-    is_liked: boolean;
-  }> => {
+  unlikeContent: async (contentType: 'post' | 'reel', contentId: string): Promise<any> => {
     const response = await apiClient.delete('/social/unlike/', {
       data: {
         content_type: contentType,
