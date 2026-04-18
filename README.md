@@ -5,19 +5,19 @@ A comprehensive social media platform with intelligent user categorization and a
 ## 📸 App Screenshots
 
 ### Login Page
-![Login Page](screenshots/login-page.jpg)
+![Login Page](screenshots/login-page.jpg?v=2)
 
-### Feed Page
-![Feed Page](screenshots/feed-page.jpg)
+### Feed Page  
+![Feed Page](screenshots/feed-page.jpg?v=2)
 
 ### Reels Page
-![Reels Page](screenshots/reels-page.jpg)
+![Reels Page](screenshots/reels-page.jpg?v=2)
 
 ### Notifications Page
-![Notifications Page](screenshots/notifications-page.jpg)
+![Notifications Page](screenshots/notifications-page.jpg?v=2)
 
 ### Profile Page
-![Profile Page](screenshots/profile-page.jpg)
+![Profile Page](screenshots/profile-page.jpg?v=2)
 
 ## Architecture Overview
 
