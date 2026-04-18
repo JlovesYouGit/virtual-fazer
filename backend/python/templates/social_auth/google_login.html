@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Login - Instagran</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin: 0;
+            font-weight: 700;
+        }
+        .login-form {
+            margin-top: 30px;
+        }
+        .google-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .google-btn:hover {
+            background: #357ae8;
+        }
+        .google-btn:active {
+            transform: scale(0.98);
+        }
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #ddd;
+        }
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #666;
+            font-size: 14px;
+        }
+        .alternative-login {
+            margin-top: 20px;
+        }
+        .alternative-btn {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .alternative-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .success-message {
+            background: #e8f5e8;
+            border: 1px solid #c3e6cb;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .google-icon {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>Instagran</h1>
+        </div>
+        
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div id="success-message" class="success-message" style="display: none;"></div>
+        
+        <div class="login-form">
+            <button id="google-login-btn" class="google-btn" onclick="handleGoogleLogin()">
+                <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25-.36v1.94c.72.13 1.46.32 2.25.56v1.95c-.9-.3 1.73-.76 2.45-1.36l1.44.9c.63-.38 1.13-.84 1.51-1.36.98-1.37 2.26-1.54 3.64-1.54.71 0 1.39.09 2.05.27v1.95c-.72-.13-1.46-.32-2.25-.56v1.95c.9.3 1.73.76 2.45 1.36l1.44-.9c.63.38 1.13.84 1.51 1.36.98 1.37 2.26 1.54 3.64 1.54.71 0 1.39-.09 2.05-.27v-1.95c.72.13 1.46.32 2.25.56v-1.95c-.9-.3-1.73-.76-2.45-1.36l-1.44.9c-.63-.38-1.13-.84-1.51-1.36-.98-1.37-2.26-1.54-3.64-1.54-.71 0-1.39.09-2.05.27v-1.95c-.72-.13-1.46-.32-2.25-.56v1.95c-.9.3-1.73.76-2.45 1.36l-1.44-.9c-.63-.38-1.13-.84-1.51-1.36-.98-1.37-2.26-1.54-3.64-1.54-.71 0-1.39.09-2.05.27v-1.95c.72.13 1.46.32 2.25.56v1.95c-.9-.3 1.73-.76 2.45-1.36l1.44.9c.63.38 1.13.84 1.51 1.36.98 1.37 2.26 1.54 3.64 1.54.71 0 1.39-.09 2.05-.27v1.95c-.72.13 1.46.32 2.25.56v-1.95c-.9-.3-1.73-.76-2.45-1.36l-1.44.9c-.63-.38-1.13-.84-1.51-1.36-.98-1.37-2.26-1.54-3.64-1.54z"/>
+                    <path fill="#34a853" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09 0-3.76 2.02-6.67 4.78-6.67.73 0 1.43.2 2.08.57.51-.08.98-.23 1.49-.46-.54-.27-1.03-.47-1.61-.59v1.95c.55.12 1.09.29 1.59.55.51-.08.98-.23 1.49-.46.54.27 1.03.47 1.61.59v-1.95c-.55-.12-1.09-.29-1.59-.55-.51.08-.98.23-1.49.46-.54-.27-1.03-.47-1.61-.59z"/>
+                </svg>
+                Continue with Google
+            </button>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Connecting to Google...</p>
+            </div>
+        </div>
+        
+        <div class="divider">
+            <span>OR</span>
+        </div>
+        
+        <div class="alternative-login">
+            <a href="/api/auth/register/" class="alternative-btn">Create Account</a>
+            <a href="/api/auth/login/" class="alternative-btn">Login with Email</a>
+        </div>
+    </div>
+
+    <script>
+        const CLIENT_ID = '{{ google_client_id|escapejs }}';
+        const REDIRECT_URI = '{{ redirect_uri|escapejs }}';
+        
+        function handleGoogleLogin() {
+            const button = document.getElementById('google-login-btn');
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-message');
+            const successMsg = document.getElementById('success-message');
+            
+            // Show loading state
+            button.style.display = 'none';
+            loading.style.display = 'block';
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            
+            // Initialize Google Sign-In
+            if (typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.initialize({
+                    client_id: CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: false
+                });
+                
+                // Prompt for Google Sign-In
+                google.accounts.id.prompt();
+            } else {
+                // Fallback to popup method
+                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${CLIENT_ID}&` +
+                    `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                    `response_type=code&` +
+                    `scope=openid email profile&` +
+                    `access_type=online`;
+                
+                window.open(authUrl, '_blank', 'width=500,height=600');
+            }
+        }
+        
+        function handleCredentialResponse(response) {
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-message');
+            const successMsg = document.getElementById('success-message');
+            
+            loading.style.display = 'none';
+            
+            if (response.credential) {
+                // Send credential to backend
+                fetch('/api/users/social/google/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        id_token: response.credential
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.access_token) {
+                        successMsg.textContent = 'Login successful! Redirecting...';
+                        successMsg.style.display = 'block';
+                        
+                        // Store tokens and redirect
+                        localStorage.setItem('access_token', data.access_token);
+                        localStorage.setItem('refresh_token', data.refresh_token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1500);
+                    } else {
+                        errorMsg.textContent = data.error || 'Login failed';
+                        errorMsg.style.display = 'block';
+                        document.getElementById('google-login-btn').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    errorMsg.textContent = 'Login failed. Please try again.';
+                    errorMsg.style.display = 'block';
+                    document.getElementById('google-login-btn').style.display = 'block';
+                });
+            } else {
+                errorMsg.textContent = 'Google authentication failed';
+                errorMsg.style.display = 'block';
+                document.getElementById('google-login-btn').style.display = 'block';
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Load Google Sign-In script
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        
+        // Handle OAuth callback (for popup method)
+        window.addEventListener('message', function(event) {
+            if (event.origin === window.location.origin && event.data.type === 'google-oauth-callback') {
+                handleCredentialResponse(event.data);
+            }
+        });
+    </script>
+</body>
+</html>
