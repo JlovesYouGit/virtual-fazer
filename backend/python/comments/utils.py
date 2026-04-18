@@ -2,7 +2,6 @@ import re
 from django.contrib.auth.models import User
 from django.utils import timezone
 from .models import CommentNotification
-from .tasks import send_realtime_comment_update
 
 
 def extract_mentions(text):

@@ -234,7 +234,12 @@ class StoryShareCreateSerializer(serializers.Serializer):
     """
     Serializer for creating story shares
     """
-    share_type = serializers.ChoiceField(choices=StoryShare.SHARE_TYPE_CHOICES)
+    share_type = serializers.ChoiceField(choices=[
+        ('direct_message', 'Direct Message'),
+        ('post', 'Post'),
+        ('external', 'External'),
+        ('story', 'Story'),
+    ])
     shared_to = serializers.UUIDField(required=False, allow_null=True)
     caption = serializers.CharField(required=False, allow_blank=True, max_length=500)
 

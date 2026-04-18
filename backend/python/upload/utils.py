@@ -2,16 +2,70 @@ import boto3
 import uuid
 import os
 import mimetypes
-from PIL import Image, ImageFilter
-import cv2
-import numpy as np
+from PIL import Image, ImageEnhance
 from django.conf import settings
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.utils import timezone
-import magic
-import hashlib
-import tempfile
+
+# Use robust utilities with graceful fallback
+from .utils_robust import image_processor, is_image_processing_available, get_available_image_features
+
+# Optional imports with fallback
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+    boto3 = None
+    ClientError = None
+
+try:
+    import cv2
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
+    cv2 = None
+
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+    np = None
+
+try:
+    import magic
+    HAS_MAGIC = True
+except ImportError:
+    HAS_MAGIC = False
+    magic = None
+
+try:
+    import hashlib
+    HAS_HASHLIB = True
+except ImportError:
+    HAS_HASHLIB = False
+    hashlib = None
+
+try:
+    import tempfile
+    HAS_TEMPFILE = True
+except ImportError:
+    HAS_TEMPFILE = False
+    tempfile = None
+
+try:
+    import shutil
+    HAS_SHUTIL = True
+except ImportError:
+    HAS_SHUTIL = False
+    shutil = None
+
+try:
+    from io import BytesIO
+    HAS_BYTESIO = True
+except ImportError:
+    HAS_BYTESIO = False
+    BytesIO = None
 import shutil
 from io import BytesIO
 

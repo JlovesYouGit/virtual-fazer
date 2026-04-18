@@ -33,7 +33,7 @@ class MessageReactionSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
-    reply_to = MessageSerializer(read_only=True)
+    reply_to = serializers.StringRelatedField(read_only=True)
     reactions = MessageReactionSerializer(many=True, read_only=True)
     
     class Meta:

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UploadedFile, UploadSession, UserUploadQuota, ContentModerationLog
+from .models import UploadedFile, UploadSession, UserUploadQuota, ContentModerationLog, FileProcessingTask
 from django.contrib.auth.models import User
 
 

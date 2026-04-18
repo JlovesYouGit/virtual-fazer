@@ -4,11 +4,10 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import KMeans
 import json
+
+# Use robust neural utilities
+from .utils import neural_processor, is_neural_available, get_available_features
 
 from .models import (
     NeuralModel, UserNeuralProfile, CategoryPattern, UserInteraction,
