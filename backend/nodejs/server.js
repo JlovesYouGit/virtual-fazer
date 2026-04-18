@@ -60,10 +60,9 @@ const logger = winston.createLogger({
   ]
 });
 
-// Redis client
+// Redis client (Redis v4+ syntax)
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
+  url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
   password: process.env.REDIS_PASSWORD || undefined
 });
 
@@ -73,6 +72,11 @@ redisClient.on('error', (err) => {
 
 redisClient.on('connect', () => {
   logger.info('Connected to Redis');
+});
+
+// Connect to Redis (required for Redis v4+)
+redisClient.connect().catch(err => {
+  logger.error('Failed to connect to Redis:', err);
 });
 
 // PostgreSQL pool
