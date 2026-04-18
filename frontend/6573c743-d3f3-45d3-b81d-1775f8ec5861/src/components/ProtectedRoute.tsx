@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { status, isLoading } = useAuth();
+  const { status, isLoading, user } = useAuth();
   const location = useLocation();
+  const [isGuest, setIsGuest] = useState(false);
+
+  useEffect(() => {
+    // Check if user is a guest
+    const guestFlag = localStorage.getItem('isGuest');
+    const userData = localStorage.getItem('user');
+    if (guestFlag === 'true' && userData) {
+      setIsGuest(true);
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -18,7 +28,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (status !== 'authenticated') {
+  // Allow access if authenticated OR guest
+  if (status !== 'authenticated' && !isGuest) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

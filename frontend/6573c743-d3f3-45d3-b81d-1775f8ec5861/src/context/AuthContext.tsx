@@ -94,8 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // Call logout endpoint if available
-      await apiClient.post('/auth/logout/');
+      // Call logout endpoint if available (skip for guests)
+      if (!localStorage.getItem('isGuest')) {
+        await apiClient.post('/auth/logout/');
+      }
     } catch (error) {
       // Continue with logout even if API call fails
       console.warn('Logout API call failed:', error);
@@ -109,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('isGuest');
   };
 
   const refreshTokens = async () => {
@@ -143,6 +146,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('accessToken');
       const refresh = localStorage.getItem('refreshToken');
       const userData = localStorage.getItem('user');
+      const isGuest = localStorage.getItem('isGuest');
+      
+      // Handle guest users
+      if (isGuest === 'true' && userData) {
+        const guestUser = JSON.parse(userData);
+        setUser(guestUser);
+        setStatus('authenticated');
+        setIsLoading(false);
+        return;
+      }
       
       if (token && refresh && userData) {
         // Validate token by making a request to get current user

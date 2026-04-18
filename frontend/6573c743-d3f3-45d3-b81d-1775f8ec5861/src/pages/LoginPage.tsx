@@ -125,6 +125,52 @@ export function LoginPage() {
             Sign in with Google
           </button>
 
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-dark-600"></div>
+            <span className="px-4 text-gray-500 text-sm font-medium">OR</span>
+            <div className="flex-1 border-t border-dark-600"></div>
+          </div>
+
+          <button
+            onClick={async () => {
+              setIsLoading(true);
+              try {
+                // Create guest session
+                const guestUser = {
+                  id: 'guest-' + Date.now(),
+                  username: 'guest_user',
+                  email: 'guest@example.com',
+                  first_name: 'Guest',
+                  last_name: 'User',
+                  is_verified: false,
+                  date_joined: new Date().toISOString(),
+                  profile_image: null,
+                  is_guest: true
+                };
+                
+                // Store guest session
+                localStorage.setItem('user', JSON.stringify(guestUser));
+                localStorage.setItem('isGuest', 'true');
+                
+                // Redirect to feed
+                navigate('/feed');
+              } catch (err) {
+                setError('Failed to enter as guest');
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+            disabled={isLoading}
+            className="w-full bg-dark-700 border border-dark-500 hover:bg-dark-600 text-gray-300 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            Continue as Guest
+          </button>
+
           <div className="mt-6 text-center">
             <a
               href="#"
