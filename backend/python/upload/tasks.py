@@ -282,7 +282,6 @@ def update_user_storage_stats():
     Update storage usage statistics for all users
     """
     try:
-        from django.contrib.auth.models import User
         from .models import UserUploadQuota
         
         users = User.objects.all()

@@ -1,6 +1,8 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from .models import UserProfile, Follow, Like, Share, FollowRequest, UserActivity, Notification
 from .tasks import (
     send_follow_notification, send_like_notification, 

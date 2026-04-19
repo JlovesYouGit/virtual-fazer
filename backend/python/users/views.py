@@ -1,3 +1,4 @@
+import logging
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -9,6 +10,10 @@ from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer, UserSerializer,
     UserProfileSerializer, UserActivitySerializer
 )
+
+# NEXUS Security/Audit Logger
+security_logger = logging.getLogger('security')
+audit_logger = logging.getLogger('audit')
 
 
 class RegisterView(generics.CreateAPIView):
@@ -58,6 +63,9 @@ class LoginView(generics.GenericAPIView):
             metadata={'ip_address': request.META.get('REMOTE_ADDR')}
         )
         
+        # NEXUS Security Audit Logging
+        audit_logger.info(f"User login: {user.email} from {request.META.get('REMOTE_ADDR')}")
+        
         # Generate tokens
         refresh = RefreshToken.for_user(user)
         
@@ -100,8 +108,14 @@ def logout_view(request):
         refresh_token = request.data["refresh_token"]
         token = RefreshToken(refresh_token)
         token.blacklist()
+        
+        # NEXUS Security Audit Logging
+        audit_logger.info(f"User logout: {request.user.email}")
+        
         return Response({"message": "Successfully logged out"}, status=status.HTTP_200_OK)
     except Exception as e:
+        # NEXUS Security Audit Logging for failed logout
+        security_logger.warning(f"Logout failed for user {request.user.email}: {str(e)}")
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 

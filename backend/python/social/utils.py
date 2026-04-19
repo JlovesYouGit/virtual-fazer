@@ -1,5 +1,7 @@
 from django.utils import timezone
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from django.db.models import Count, Q, F
 from celery import shared_task
 from channels.layers import get_channel_layer

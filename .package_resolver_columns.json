@@ -1,0 +1,57 @@
+{
+  "columns": [
+    {
+      "id": "col_1776562698483_230",
+      "timestamp": "2026-04-19T01:38:18.483Z",
+      "chainFormed": true,
+      "success": true,
+      "noConflict": true,
+      "packages": [
+        {
+          "name": "playwright",
+          "version": "0.9.0",
+          "source": "npm",
+          "language": "node",
+          "gf": 50,
+          "h": 0.9893879013831026,
+          "chainScore": 1,
+          "compatible": true,
+          "adjusted": true,
+          "originalVersion": "^1.59.1",
+          "versionScore": 1,
+          "attempts": 1
+        }
+      ],
+      "gfValue": 50,
+      "hValue": 0.9893879013831026
+    }
+  ],
+  "activeColumn": {
+    "id": "col_1776562698483_230",
+    "timestamp": "2026-04-19T01:38:18.483Z",
+    "chainFormed": true,
+    "success": true,
+    "noConflict": true,
+    "packages": [
+      {
+        "name": "playwright",
+        "version": "0.9.0",
+        "source": "npm",
+        "language": "node",
+        "gf": 50,
+        "h": 0.9893879013831026,
+        "chainScore": 1,
+        "compatible": true,
+        "adjusted": true,
+        "originalVersion": "^1.59.1",
+        "versionScore": 1,
+        "attempts": 1
+      }
+    ],
+    "gfValue": 50,
+    "hValue": 0.9893879013831026
+  },
+  "patterns": [
+    "playwright@0.9.0:node"
+  ]
+}

@@ -1,6 +1,8 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from .models import Comment, CommentLike, CommentThread, CommentNotification
 from .tasks import update_comment_statistics, send_realtime_comment_update
 from .utils import send_comment_notification

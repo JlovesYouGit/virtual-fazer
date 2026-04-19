@@ -229,7 +229,6 @@ def get_followers(request, user_id):
         page = paginator.paginate_queryset(followers, request)
         
         # Serialize
-        from django.contrib.auth.models import User
         follower_data = []
         for follow in page:
             follower_data.append({
